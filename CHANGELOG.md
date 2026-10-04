@@ -2,6 +2,19 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.2.1] - 2026-10-04
+
+### Changed / 变更
+
+- **Auto-fill / 填原料**：点击时第一格自动改为仓储；第一格为空则按第二格产品识别生产建筑（优先塔内已有建筑）。
+- **Vein miners / 矿脉采矿**：普通采矿机按 **座数 × 180/分钟**（6 矿脉×30）；大型 **座数 × 900/分钟**（15×60），线性叠座数，不再用 `ceil(座数/10)` batch。
+- **Tech unlock gifts / 科技送塔**：**每项科技**首次解锁送 **1** 座行星内物流塔（2103）；电磁学/基础制造/电磁矩阵/自动化冶金/基础物流仍为 **3** 座。
+
+### Fixed / 修复
+
+- **Vein mining tower / 矿脉采矿塔**：矿脉采矿在 `GetPeriod` 之前执行，避免 `minerTicksPerItem` 未设导致 `period==0` 整站停产。
+- **Matrix research tower / 矩阵研究塔**：扣矩阵时写入 `FactoryProductionStat.total[13]`，避免「科技解锁修改」反作弊（`ABN_ItemForUnlockTech`）。
+
 ## [1.2.0] - 2026-10-04
 
 ### Added / 新增
@@ -60,6 +73,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Fill ingredients** button in the station window.
 - Requires **BepInEx 5.4.17** (xiaoye97).
 
+[1.2.1]: https://github.com/cat-yummi/DSP-towerFactory/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/cat-yummi/DSP-towerFactory/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/cat-yummi/DSP-towerFactory/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/cat-yummi/DSP-towerFactory/compare/v1.1.0...v1.1.1

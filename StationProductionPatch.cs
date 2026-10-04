@@ -10,7 +10,7 @@ namespace TowerFactory
     /// <summary>
     /// 塔厂：第一格放生产建筑（不设需求/供应），后续格决定生产内容。
     /// - 制造类建筑 / 研究站：第二格放产品，后续格按配方顺序放原料。
-    /// - 采矿机：第二格放本行星有的矿物；大型采矿机以 3 倍速度生产第二格起的全部矿物。
+    /// - 采矿机：第二格放本行星有的矿物；产量为矿机数×180/分钟（等同 6 矿脉×30）；大型采矿机多格且为矿机数×900/分钟（15 矿脉×60）。
     /// - 射线接收站：第二格放临界光子，从戴森球多余能量中制造光子。
     /// - 弹射器：第二格太阳帆，直接增加戴森壳细胞点数（等同吸收太阳帆，不入戴森云）。
     /// - 发射井：第二格小运载火箭，直接增加结构点数（等同火箭抵达）。
@@ -29,9 +29,12 @@ namespace TowerFactory
         /// <summary>矩阵研究塔：第二格起可放研究矩阵（含供应设置的第二格）。</summary>
         private const int TechResearchMatrixFirstSlot = 1;
         private const string SlotsNotEnoughMessage = "原料格子不够，请加装运输塔扩容mod";
-        private const double VeinMinerTicksPerItem = 120.0;
         private const double OilExtractorTicksPerItem = 60.0;
-        private const int AdvancedMinerMultiplier = 3;
+        /// <summary>普通采矿机：6 矿脉 × 30/分钟/脉。</summary>
+        private const double VeinMinerItemsPerMinutePerBuilding = 180.0;
+        /// <summary>大型采矿机：15 矿脉 × 60/分钟/脉。</summary>
+        private const double AdvancedVeinMinerItemsPerMinutePerBuilding = 900.0;
+        private const double GameTicksPerMinute = 3600.0;
         private const int AssemblerSelfProductMinBuildings = 100;
         private const double FractionatorTicksPerItem = 300.0;
         private const float GammaPhotonModeMultiplier = 8f;
@@ -66,6 +69,8 @@ namespace TowerFactory
             public int[] outputSlots;
             public int outputMultiplier;
             public double minerTicksPerItem;
+            /// <summary>矿脉采矿：&gt;0 时按「座数×本值×采矿速度」线性产出，不走周期 batch。</summary>
+            public double itemsPerMinutePerBuilding;
 
             public double photonTicks;
             public long photonHeat;
@@ -202,6 +207,23 @@ namespace TowerFactory
             }
             int batch = (buildingCount + CycleDivisor - 1) / CycleDivisor;
 
+            if (plan.kind == PlanKind.Miner && plan.itemsPerMinutePerBuilding > 0)
+            {
+                float scale = GameMain.history.miningSpeedScale;
+                if (scale <= 0f)
+                {
+                    return;
+                }
+                state.progress += buildingCount * plan.itemsPerMinutePerBuilding * scale / GameTicksPerMinute;
+                int produced = (int)state.progress;
+                if (produced > 0)
+                {
+                    state.progress -= produced;
+                    CraftMiner(station, plan, produced, productRegister);
+                }
+                return;
+            }
+
             double period = GetPeriod(plan);
             if (period <= 0)
             {
@@ -221,7 +243,7 @@ namespace TowerFactory
                         CraftRecipe(station, plan, batch, productRegister, consumeRegister);
                         break;
                     case PlanKind.Miner:
-                        CraftMiner(station, plan, batch, productRegister);
+                        CraftMiner(station, plan, batch * plan.outputMultiplier, productRegister);
                         break;
                     case PlanKind.Gamma:
                         CraftGamma(station, state, plan, batch, productRegister);
@@ -230,7 +252,7 @@ namespace TowerFactory
                         CraftDyson(factory, station, plan, batch, buildingCount, consumeRegister);
                         break;
                     case PlanKind.TechResearch:
-                        CraftTechResearch(station, buildingCount, consumeRegister);
+                        CraftTechResearch(factory, station, buildingCount);
                         break;
                 }
             }
@@ -383,7 +405,26 @@ namespace TowerFactory
             return need.Any(n => n > 0);
         }
 
-        private static bool TryConsumeMatricesFromStation(StationStore[] storage, TechProto tech, long remainingHash, int[] consumeRegister)
+        /// <summary>
+        /// 反作弊 ABN_ItemForUnlockTech 核对全星系 productPool[].total[13]（矩阵消耗累计），
+        /// 不能只写每帧 consumeRegister（要等 StatisticsGameTick 才并入 total）。
+        /// </summary>
+        private static void RegisterResearchMatrixConsumptionTotal(PlanetFactory factory, int matrixId, int amount)
+        {
+            if (factory == null || matrixId <= 0 || amount <= 0)
+            {
+                return;
+            }
+            ProductionStatistics production = GameMain.statistics?.production;
+            if (production == null)
+            {
+                return;
+            }
+            FactoryProductionStat factoryStat = production.factoryStatPool[factory.index];
+            factoryStat?.AddConsumptionToTotalArray(matrixId, amount);
+        }
+
+        private static bool TryConsumeMatricesFromStation(PlanetFactory factory, StationStore[] storage, TechProto tech, long remainingHash)
         {
             int[] need = new int[ResearchMatrixIds.Length];
             if (!TryComputeMatrixNeeds(tech, remainingHash, need))
@@ -428,10 +469,7 @@ namespace TowerFactory
                 {
                     return false;
                 }
-                lock (consumeRegister)
-                {
-                    consumeRegister[matrixId] += need[i];
-                }
+                RegisterResearchMatrixConsumptionTotal(factory, matrixId, need[i]);
             }
             return true;
         }
@@ -450,7 +488,7 @@ namespace TowerFactory
             return (int)Math.Min(cost, int.MaxValue);
         }
 
-        private static bool TryConsumeMatrixAmount(StationStore[] storage, int matrixId, int amount, int[] consumeRegister, int firstSlot = FirstIngredientSlot)
+        private static bool TryConsumeMatrixAmount(PlanetFactory factory, StationStore[] storage, int matrixId, int amount, int firstSlot = FirstIngredientSlot)
         {
             if (amount <= 0 || CountMatrixInStation(storage, matrixId, firstSlot) < amount)
             {
@@ -476,14 +514,11 @@ namespace TowerFactory
             {
                 return false;
             }
-            lock (consumeRegister)
-            {
-                consumeRegister[matrixId] += amount;
-            }
+            RegisterResearchMatrixConsumptionTotal(factory, matrixId, amount);
             return true;
         }
 
-        private static void CraftTechResearch(StationComponent station, int buildingCount, int[] consumeRegister)
+        private static void CraftTechResearch(PlanetFactory factory, StationComponent station, int buildingCount)
         {
             StationStore[] storage = station.storage;
             lock (storage)
@@ -496,7 +531,7 @@ namespace TowerFactory
                     }
                     if (IsUniverseMatrixOnlyTech(tech))
                     {
-                        CraftUniverseMatrixResearch(storage, tech, buildingCount, consumeRegister);
+                        CraftUniverseMatrixResearch(factory, storage, tech, buildingCount);
                         return;
                     }
                     while (TryGetCurrentLabTech(out tech, out ts))
@@ -514,7 +549,7 @@ namespace TowerFactory
                         {
                             break;
                         }
-                        if (!TryConsumeMatricesFromStation(storage, tech, remaining, consumeRegister))
+                        if (!TryConsumeMatricesFromStation(factory, storage, tech, remaining))
                         {
                             break;
                         }
@@ -539,7 +574,7 @@ namespace TowerFactory
         }
 
         /// <summary>纯宇宙矩阵科技：每秒每座矩阵研究站（第一格）消耗 1 个宇宙矩阵 6006。</summary>
-        private static void CraftUniverseMatrixResearch(StationStore[] storage, TechProto tech, int buildingCount, int[] consumeRegister)
+        private static void CraftUniverseMatrixResearch(PlanetFactory factory, StationStore[] storage, TechProto tech, int buildingCount)
         {
             if (!GameMain.history.techStates.TryGetValue(GameMain.history.currentTech, out TechState ts))
             {
@@ -569,7 +604,7 @@ namespace TowerFactory
                 consume = Math.Max(1, Math.Min(consume, Math.Min(buildingCount, CountTechResearchMatrix(storage, 6006))));
                 hashAdd = Math.Min(HashFromUniverseMatrixCount(tech, consume), remaining);
             }
-            if (hashAdd <= 0 || !TryConsumeMatrixAmount(storage, 6006, consume, consumeRegister, TechResearchMatrixFirstSlot))
+            if (hashAdd <= 0 || !TryConsumeMatrixAmount(factory, storage, 6006, consume, TechResearchMatrixFirstSlot))
             {
                 return;
             }
@@ -808,14 +843,14 @@ namespace TowerFactory
             }
         }
 
-        private static void CraftMiner(StationComponent station, Plan plan, int batch, int[] productRegister)
+        private static void CraftMiner(StationComponent station, Plan plan, int itemCount, int[] productRegister)
         {
             StationStore[] storage = station.storage;
             lock (storage)
             {
                 foreach (int slot in plan.outputSlots)
                 {
-                    int amount = Math.Min(batch * plan.outputMultiplier, FreeSpace(storage[slot]));
+                    int amount = Math.Min(itemCount, FreeSpace(storage[slot]));
                     if (amount <= 0)
                     {
                         continue;
@@ -1193,25 +1228,158 @@ namespace TowerFactory
         }
 
         /// <summary>
-        /// 自动填原料：第一格是仓储的生产建筑、第二格有产品、第三格起全空时，按配方填入原料（伪配方优先）。
+        /// 自动填原料：第一格为仓储的生产建筑、第二格有产品、第三格起全空时，按配方填入原料（伪配方优先）。
+        /// 点击时会尝试将第一格改为仓储，并在第一格为空时根据第二格产品推断生产建筑。
         /// </summary>
         public static bool TryAutoFill(PlanetTransport transport, StationComponent station, out string message)
         {
+            Player player = GameMain.mainPlayer;
+            if (player == null)
+            {
+                message = Tr("需要玩家", "Player required");
+                return false;
+            }
+            if (!TryPrepareAutoFillStation(transport, station, player, out List<string> prepNotes, out message))
+            {
+                return false;
+            }
             int[] ingredients = SuggestIngredients(station, out message);
             if (ingredients == null)
             {
                 return false;
             }
-            Player player = GameMain.mainPlayer;
             ELogisticStorage remoteLogic = station.isStellar ? ELogisticStorage.Demand : ELogisticStorage.None;
             for (int j = 0; j < ingredients.Length; j++)
             {
                 transport.SetStationStorage(station.id, FirstIngredientSlot + j, ingredients[j], int.MaxValue, ELogisticStorage.Demand, remoteLogic, player);
             }
             string names = string.Join(Tr("、", ", "), ingredients.Select(ItemName));
-            message = Tr($"已填入原料：{names}", $"Ingredients filled: {names}");
-            TowerFactory.Log.LogInfo($"{StationLabel(transport.factory, station)} 已填入原料：{names}");
+            string fillPart = Tr($"已填入原料：{names}", $"Ingredients filled: {names}");
+            message = prepNotes.Count > 0 ? string.Join(Tr("；", "; "), prepNotes) + Tr("；", "; ") + fillPart : fillPart;
+            TowerFactory.Log.LogInfo($"{StationLabel(transport.factory, station)} {message}");
             return true;
+        }
+
+        private static bool TryPrepareAutoFillStation(
+            PlanetTransport transport,
+            StationComponent station,
+            Player player,
+            out List<string> prepNotes,
+            out string message)
+        {
+            prepNotes = new List<string>();
+            message = null;
+            StationStore[] storage = station?.storage;
+            if (storage == null || storage.Length == 0)
+            {
+                message = Tr("这座塔不能做塔厂", "This station can't be a tower factory");
+                return false;
+            }
+            ref StationStore buildingSlot = ref storage[0];
+            bool needStorageMode = buildingSlot.localLogic != ELogisticStorage.None
+                || (station.isStellar && buildingSlot.remoteLogic != ELogisticStorage.None);
+            if (needStorageMode)
+            {
+                int max = buildingSlot.max > 0 ? buildingSlot.max : int.MaxValue;
+                transport.SetStationStorage(station.id, 0, buildingSlot.itemId, max, ELogisticStorage.None, ELogisticStorage.None, player);
+                prepNotes.Add(Tr("第一格已改为仓储", "Slot 1 set to Storage"));
+            }
+            if (buildingSlot.itemId <= 0)
+            {
+                int productId = storage[1].itemId;
+                if (productId <= 0)
+                {
+                    message = Tr("第一格为空时请先在第二格放产品", "With slot 1 empty, put the product in slot 2 first");
+                    return false;
+                }
+                if (!TryResolveAutoFillBuildingItem(storage, productId, out int buildingItemId))
+                {
+                    message = Tr("无法根据第二格产品识别生产建筑", "Can't infer a production building from the product in slot 2");
+                    return false;
+                }
+                int max = buildingSlot.max > 0 ? buildingSlot.max : int.MaxValue;
+                transport.SetStationStorage(station.id, 0, buildingItemId, max, ELogisticStorage.None, ELogisticStorage.None, player);
+                prepNotes.Add(Tr($"第一格已识别为 {ItemName(buildingItemId)}", $"Slot 1 set to {ItemName(buildingItemId)}"));
+            }
+            return true;
+        }
+
+        private static bool TryResolveAutoFillBuildingItem(StationStore[] storage, int productId, out int buildingItemId)
+        {
+            buildingItemId = 0;
+            for (int s = FirstIngredientSlot; s < storage.Length; s++)
+            {
+                int itemId = storage[s].itemId;
+                if (itemId > 0 && ProductionBuildingCanMakeProduct(itemId, productId))
+                {
+                    buildingItemId = itemId;
+                    return true;
+                }
+            }
+            var candidates = new List<int>();
+            ItemProto[] items = LDB.items.dataArray;
+            if (items == null)
+            {
+                return false;
+            }
+            for (int i = 0; i < items.Length; i++)
+            {
+                ItemProto item = items[i];
+                if (item != null && ProductionBuildingCanMakeProduct(item.ID, productId))
+                {
+                    candidates.Add(item.ID);
+                }
+            }
+            if (candidates.Count == 0)
+            {
+                return false;
+            }
+            candidates.Sort();
+            buildingItemId = candidates[0];
+            return true;
+        }
+
+        private static bool ProductionBuildingCanMakeProduct(int buildingItemId, int productId)
+        {
+            PrefabDesc prefabDesc = LDB.items.Select(buildingItemId)?.prefabDesc;
+            if (prefabDesc == null)
+            {
+                return false;
+            }
+            if (prefabDesc.isPowerExchanger)
+            {
+                return prefabDesc.fullId == productId && prefabDesc.emptyId > 0;
+            }
+            if (prefabDesc.isFractionator)
+            {
+                return LDB.recipes.dataArray.Any(recipe =>
+                    recipe != null
+                    && recipe.Type == ERecipeType.Fractionate
+                    && recipe.Results.Length > 0
+                    && recipe.Results[0] == productId
+                    && recipe.Items.Length > 0);
+            }
+            if (prefabDesc.isLab)
+            {
+                return LDB.recipes.dataArray.Any(recipe =>
+                    recipe != null
+                    && recipe.Type == ERecipeType.Research
+                    && recipe.Results.Length > 0
+                    && Array.IndexOf(recipe.Results, productId) >= 0);
+            }
+            if (prefabDesc.isAssembler)
+            {
+                ERecipeType recipeType = prefabDesc.assemblerRecipeType;
+                if (PseudoRecipes.All.Any(pseudo => pseudo.buildingType == recipeType && pseudo.outputs.ContainsKey(productId)))
+                {
+                    return true;
+                }
+                return LDB.recipes.dataArray.Any(recipe =>
+                    recipe != null
+                    && recipe.Type == recipeType
+                    && Array.IndexOf(recipe.Results, productId) >= 0);
+            }
+            return false;
         }
 
         private static int[] SuggestIngredients(StationComponent station, out string reason)
@@ -1226,12 +1394,7 @@ namespace TowerFactory
             PrefabDesc prefabDesc = buildingSlot.itemId > 0 ? LDB.items.Select(buildingSlot.itemId)?.prefabDesc : null;
             if (prefabDesc == null || !(prefabDesc.isAssembler || prefabDesc.isLab || prefabDesc.isFractionator || prefabDesc.isPowerExchanger))
             {
-                reason = Tr("第一格需要放有配方的生产建筑", "Slot 1 must hold a production building that uses recipes");
-                return null;
-            }
-            if (buildingSlot.localLogic != ELogisticStorage.None || (station.isStellar && buildingSlot.remoteLogic != ELogisticStorage.None))
-            {
-                reason = Tr("第一格需要设为仓储", "Slot 1 must be set to Storage");
+                reason = Tr("第一格需要是有配方的生产建筑", "Slot 1 must be a production building that uses recipes");
                 return null;
             }
             if (!TryResolveRecipeProductId(storage, prefabDesc, buildingSlot.itemId, out int productId, out _))
@@ -1397,8 +1560,9 @@ namespace TowerFactory
                 kind = PlanKind.Miner,
                 description = $"{(isAdvanced ? "大型采矿" : "采矿")} {string.Join("、", names)}{skippedText}",
                 outputSlots = slots.ToArray(),
-                outputMultiplier = isAdvanced ? AdvancedMinerMultiplier : 1,
-                minerTicksPerItem = VeinMinerTicksPerItem
+                itemsPerMinutePerBuilding = isAdvanced
+                    ? AdvancedVeinMinerItemsPerMinutePerBuilding
+                    : VeinMinerItemsPerMinutePerBuilding
             };
         }
 

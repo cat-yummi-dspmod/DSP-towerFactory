@@ -22,7 +22,7 @@
   * Only the product in slot 2 is stored. Byproducts are discarded, but still counted as produced in the statistics panel.
   * Byproducts never block the main product.
 * Auto-fill ingredients:
-  * Set slot 1 (Storage) and slot 2, leave the rest empty, then click the "Fill Ingredients" button at the top right of the station window.
+  * Put the product in slot 2 and leave slot 3 onward empty, then click **Fill Ingredients** (top right). Slot 1 is set to **Storage** if needed; if slot 1 is empty, the mod picks a production building that can make slot 2’s product (preferring a building already in the station).
   * Ingredients are set to Demand. Pseudo recipes take priority.
   * If no recipe fits, you'll see "原料格子不够，请加装运输塔扩容mod" (not enough slots, install a station expansion mod).
 * Pseudo recipes (several real recipes merged into one; every intermediate step is counted in the statistics):
@@ -33,8 +33,8 @@
 
 ## Mining
 
-* Mining Machine: slot 2 is a mineral found on this planet. 30 per minute per machine, multiplied by mining speed research.
-* Advanced Mining Machine: produces every mineral from slot 2 onwards, each at 3 times the Mining Machine speed. Slots with minerals not found on this planet are skipped.
+* Mining Machine: slot 2 is a mineral found on this planet. **180 per minute per machine** (6 veins × 30), linear with stack count, multiplied by mining speed research.
+* Advanced Mining Machine: produces every mineral from slot 2 onwards, **900 per minute per machine** (15 veins × 60) per slot. Slots with minerals not found on this planet are skipped.
 * Water Pump: slot 2 is this planet's ocean item (water or sulfuric acid). Uses the real pump speed.
 * Oil Extractor: slot 2 is crude oil, and the planet must have oil seeps. 1 per second per extractor, multiplied by mining speed research.
 * Veins are never depleted.
@@ -70,7 +70,7 @@
 
 ## Tech unlock gifts (v1.1.2+)
 
-* First unlock of Electromagnetics **1001**, Basic assembling **1201**, Electromagnetic matrix **1002**, Automatic metallurgy **1401**, or Basic logistics **1601** grants **2 planetary logistics stations (2103)** to inventory only (does not unlock logistics tech).
+* **Every tech** grants **1 planetary logistics station (2103)** on first unlock (inventory only; does not unlock logistics tech). Electromagnetics **1001**, Basic assembling **1201**, Electromagnetic matrix **1002**, Automatic metallurgy **1401**, and Basic logistics **1601** grant **3** instead. Once per tech per save.
 
 ## Notes
 
@@ -111,7 +111,7 @@
   * 只收第二格的产品，副产物直接丢弃，但会计入生产统计。
   * 副产物不会影响主产物的生产。
 * 自动填原料：
-  * 设好第一格（仓储）和第二格，后面留空，点运输塔窗口右上角的"塔厂：填原料"按钮。
+  * 第二格放产品、第三格起留空，点右上角「塔厂：填原料」。第一格若不是仓储会自动改为仓储；第一格为空时会根据第二格产品识别生产建筑（优先用塔里已有建筑）。
   * 原料格设为需求，伪配方优先。
   * 如果格子放不下任何配方，会提示"原料格子不够，请加装运输塔扩容mod"。
 * 伪配方（多步真实配方合成一步，中间步骤的生产和消耗都计入统计）：
@@ -122,8 +122,8 @@
 
 ## 采集
 
-* 采矿机：第二格放本行星有的矿物，每座每分钟 30 个，乘以采矿速度科技加成。
-* 大型采矿机：第二格起的矿物全部生产，每格都是采矿机的 3 倍速度；本行星没有的矿会被跳过。
+* 采矿机：第二格放本行星有的矿物，**每座每分钟 180 个**（6 矿脉×30），总产量与第一格矿机数量成正比，乘以采矿速度科技。
+* 大型采矿机：第二格起的矿物全部生产，**每座每分钟 900 个**（15 矿脉×60），每格独立产出；本行星没有的矿会被跳过。
 * 抽水机：第二格放本行星海洋里的物品（水或硫酸），按抽水机的真实速度生产。
 * 原油萃取站：第二格放原油，本行星需要有油井；每座每秒 1 个，乘以采矿速度科技加成。
 * 不消耗行星上的资源。
@@ -159,7 +159,7 @@
 
 ## 科技解锁送塔（1.1.2 起）
 
-* 首次解锁电磁学 **1001**、基础制造 **1201**、电磁矩阵 **1002**、自动化冶金 **1401**、基础物流 **1601** 时，背包获得 **2 个行星内物流运输塔（2103）**（不解锁物流科技）。
+* **每项科技**首次解锁送 **1 个**行星内物流运输塔（2103）；电磁学 **1001**、基础制造 **1201**、电磁矩阵 **1002**、自动化冶金 **1401**、基础物流 **1601** 送 **3 个**（不解锁物流科技，每科技每存档一次）。
 
 ## 注意事项
 

@@ -158,10 +158,7 @@ namespace TowerFactory
                 message = StationProductionPatch.Tr("填原料失败", "Failed to fill ingredients");
             }
             UIRealtimeTip.Popup(message, !filled, 0);
-            if (filled)
-            {
-                RefreshStationWindow(window);
-            }
+            RefreshStationWindow(window);
         }
 
         private sealed class AutoFillButtonHost : MonoBehaviour
