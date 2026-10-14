@@ -16,6 +16,7 @@ namespace TowerFactory
 
         [HarmonyPostfix]
         [HarmonyPatch("_OnOpen")]
+        [YummiHarness.Guard("12e97c0fdc1081fd")]
         public static void OnOpen_Postfix(UIStationWindow __instance)
         {
             EnsureButton(__instance);
@@ -23,6 +24,7 @@ namespace TowerFactory
 
         [HarmonyPostfix]
         [HarmonyPatch("OnStationIdChange")]
+        [YummiHarness.Guard("a94c837d579532f7")]
         public static void OnStationIdChange_Postfix(UIStationWindow __instance)
         {
             EnsureButton(__instance);

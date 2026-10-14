@@ -5,25 +5,27 @@ using HarmonyLib;
 namespace TowerFactory
 {
     [BepInPlugin(PLUGIN_GUID, PLUGIN_NAME, PLUGIN_VERSION)]
+    [BepInDependency(YummiHarness.HarnessPlugin.PluginGuid)]
     public class TowerFactory : BaseUnityPlugin
     {
         public const string PLUGIN_GUID = "com.yummi.dsp.towerfactory";
         public const string PLUGIN_NAME = "塔厂 (Tower Factory)";
-        public const string PLUGIN_VERSION = "1.2.1";
+        public const string PLUGIN_VERSION = "1.2.4";
 
         private static readonly Harmony harmony = new Harmony(PLUGIN_GUID);
+        private static readonly YummiHarness.PatchOptions HarnessOptions = new YummiHarness.PatchOptions { ModName = "TowerFactory" };
         internal static ManualLogSource Log;
 
         private void Awake()
         {
             Log = Logger;
 
-            harmony.PatchAll(typeof(StationProductionPatch));
-            harmony.PatchAll(typeof(UIStationWindowPatch));
-            harmony.PatchAll(typeof(TechStationGiftPatch));
-            harmony.PatchAll(typeof(DysonSwarmCapPatch));
-            harmony.PatchAll(typeof(StationTowerRevalidatePatch));
-            harmony.PatchAll(typeof(TechHashMainThreadPatch));
+            YummiHarness.Harness.PatchAll(harmony, typeof(StationProductionPatch), HarnessOptions);
+            YummiHarness.Harness.PatchAll(harmony, typeof(UIStationWindowPatch), HarnessOptions);
+            YummiHarness.Harness.PatchAll(harmony, typeof(TechStationGiftPatch), HarnessOptions);
+            YummiHarness.Harness.PatchAll(harmony, typeof(DysonSwarmCapPatch), HarnessOptions);
+            YummiHarness.Harness.PatchAll(harmony, typeof(StationTowerRevalidatePatch), HarnessOptions);
+            YummiHarness.Harness.PatchAll(harmony, typeof(TechHashMainThreadPatch), HarnessOptions);
 
             Log.LogInfo($"{PLUGIN_NAME} v{PLUGIN_VERSION} 已加载");
         }

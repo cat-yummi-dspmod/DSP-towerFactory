@@ -26,6 +26,7 @@ namespace TowerFactory
 
         [HarmonyPostfix]
         [HarmonyPatch(nameof(GameHistoryData.NotifyTechUnlock))]
+        [YummiHarness.Guard("69c5bc40ce9ed7f5")]
         public static void NotifyTechUnlock_Postfix(GameHistoryData __instance, int _techId, int _level, bool _unlockedDirect)
         {
             if (__instance == null)
@@ -41,11 +42,22 @@ namespace TowerFactory
             {
                 return;
             }
+            if (!CanDeliverItemsToPlayer())
+            {
+                // 新游戏 SetForNewGame → UnlockTech 时玩家尚未生成，不能调用 GainTechAwards
+                return;
+            }
             int count = IsBonusGiftTech(_techId) ? BonusStationGiftCount : DefaultStationGiftCount;
             __instance.RegFeatureKey(featureKey);
             __instance.GainTechAwards(PlanetaryLogisticsStationItemId, count);
             string techLabel = LDB.techs.Select(_techId)?.name ?? _techId.ToString();
             TowerFactory.Log.LogInfo($"科技 {techLabel} 已解锁：赠送 {count} 个行星内物流运输塔（未解锁物流科技配方）");
+        }
+
+        private static bool CanDeliverItemsToPlayer()
+        {
+            Player player = GameMain.mainPlayer;
+            return player != null && player.package != null;
         }
 
         private static bool IsBonusGiftTech(int techId)

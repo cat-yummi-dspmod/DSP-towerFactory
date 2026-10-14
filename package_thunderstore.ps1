@@ -17,6 +17,7 @@ New-Item -ItemType Directory -Path $TempDir | Out-Null
 
 Copy-Item (Join-Path $PSScriptRoot "manifest.json") -Destination $TempDir
 Copy-Item (Join-Path $PSScriptRoot "README.md") -Destination $TempDir
+Copy-Item (Join-Path $PSScriptRoot "CHANGELOG.md") -Destination $TempDir
 Copy-Item (Join-Path $PSScriptRoot "icon.png") -Destination $TempDir
 Copy-Item $Dll -Destination $TempDir
 

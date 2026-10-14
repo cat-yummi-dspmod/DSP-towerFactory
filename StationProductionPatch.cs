@@ -44,6 +44,22 @@ namespace TowerFactory
         private const int MatrixPointPerItem = 3600;
         private static readonly int[] ResearchMatrixIds = { 6001, 6002, 6003, 6004, 6005, 6006 };
 
+        /// <summary>与原版 <c>StationComponent.split_inc</c> 一致：按取出数量等比扣增产点。</summary>
+        private static int SplitInc(ref int count, ref int inc, int take)
+        {
+            if (count == 0)
+            {
+                return 0;
+            }
+            int perItem = inc / count;
+            int remainder = inc - perItem * count;
+            count -= take;
+            remainder -= count;
+            int taken = remainder > 0 ? perItem * take + remainder : perItem * take;
+            inc -= taken;
+            return taken;
+        }
+
         private enum PlanKind
         {
             Recipe,
@@ -121,6 +137,7 @@ namespace TowerFactory
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.GameTick))]
+        [YummiHarness.Guard("d51c267cb7ae3cf0")]
         public static void PlanetTransport_GameTick_Postfix(PlanetTransport __instance)
         {
             PlanetFactory factory = __instance.factory;
@@ -252,7 +269,7 @@ namespace TowerFactory
                         CraftDyson(factory, station, plan, batch, buildingCount, consumeRegister);
                         break;
                     case PlanKind.TechResearch:
-                        CraftTechResearch(factory, station, buildingCount);
+                        TechHashMainThreadPatch.EnqueueTechCraft(factory, station, buildingCount);
                         break;
                 }
             }
@@ -458,11 +475,7 @@ namespace TowerFactory
                         continue;
                     }
                     int take = Math.Min(left, slot.count);
-                    slot.count -= take;
-                    if (slot.inc > slot.count)
-                    {
-                        slot.inc = slot.count;
-                    }
+                    SplitInc(ref slot.count, ref slot.inc, take);
                     left -= take;
                 }
                 if (left > 0)
@@ -503,11 +516,7 @@ namespace TowerFactory
                     continue;
                 }
                 int take = Math.Min(left, slot.count);
-                slot.count -= take;
-                if (slot.inc > slot.count)
-                {
-                    slot.inc = slot.count;
-                }
+                SplitInc(ref slot.count, ref slot.inc, take);
                 left -= take;
             }
             if (left > 0)
@@ -518,7 +527,7 @@ namespace TowerFactory
             return true;
         }
 
-        private static void CraftTechResearch(PlanetFactory factory, StationComponent station, int buildingCount)
+        internal static void RunTechResearchOnMainThread(PlanetFactory factory, StationComponent station, int buildingCount)
         {
             StationStore[] storage = station.storage;
             lock (storage)
@@ -553,7 +562,7 @@ namespace TowerFactory
                         {
                             break;
                         }
-                        TechHashMainThreadPatch.EnqueueTechHash(remaining);
+                        GameMain.history.AddTechHash(remaining);
                     }
                 }
             }
@@ -608,7 +617,7 @@ namespace TowerFactory
             {
                 return;
             }
-            TechHashMainThreadPatch.EnqueueTechHash(hashAdd);
+            GameMain.history.AddTechHash(hashAdd);
         }
 
         private static bool SphereHasStructureWork(DysonSphere sphere)
@@ -781,11 +790,7 @@ namespace TowerFactory
                 {
                     return;
                 }
-                storage[1].count -= deduct;
-                if (storage[1].inc > storage[1].count)
-                {
-                    storage[1].inc = storage[1].count;
-                }
+                SplitInc(ref storage[1].count, ref storage[1].inc, deduct);
                 built = deduct;
             }
             plan.statConsumed.Register(consumeRegister, built);
@@ -826,11 +831,7 @@ namespace TowerFactory
                 for (int j = 0; j < items.Length; j++)
                 {
                     ref StationStore store = ref storage[FirstIngredientSlot + j];
-                    store.count -= times * itemCounts[j];
-                    if (store.inc > store.count)
-                    {
-                        store.inc = store.count;
-                    }
+                    SplitInc(ref store.count, ref store.inc, times * itemCounts[j]);
                 }
                 if (!plan.implicitSlot2Product && productSlot.itemId == 0)
                 {

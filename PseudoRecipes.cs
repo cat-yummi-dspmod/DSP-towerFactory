@@ -66,8 +66,11 @@ namespace TowerFactory
         private const int RefinedOil = 1114;
         private const int TitaniumCrystal = 1118;
         private const int Hydrogen = 1120;
+        private const int Antimatter = 1122;
         private const int Graphene = 1123;
         private const int Casimir = 1126;
+        private const int CriticalPhoton = 1208;
+        private const int AntimatterFuelRod = 1803;
         private const int EnergyMatrix = 6002;
 
         private static readonly Lazy<List<PseudoRecipe>> all = new Lazy<List<PseudoRecipe>>(Build);
@@ -79,11 +82,13 @@ namespace TowerFactory
             var list = new List<PseudoRecipe>();
             RecipeProto plasma = Find(ERecipeType.Refine, new[] { CrudeOil }, RefinedOil);
             RecipeProto xray = Find(ERecipeType.Refine, new[] { RefinedOil, Hydrogen }, Graphite);
-            RecipeProto reforming = Find(ERecipeType.Refine, new[] { RefinedOil, Hydrogen, Coal }, RefinedOil);
+            RecipeProto reforming = FindReformedRefinement();
             RecipeProto energyMatrix = Find(ERecipeType.Research, new[] { Graphite, Hydrogen }, EnergyMatrix);
             RecipeProto fireIceGraphene = Find(ERecipeType.Chemical, new[] { FireIce }, Graphene);
             RecipeProto casimir = Find(ERecipeType.Assemble, new[] { TitaniumCrystal, Graphene, Hydrogen }, Casimir);
             RecipeProto casimirGrating = Find(ERecipeType.Assemble, new[] { OpticalGrating, Graphene, Hydrogen }, Casimir);
+            RecipeProto massEnergy = Find(ERecipeType.Particle, new[] { CriticalPhoton }, Antimatter);
+            RecipeProto antimatterFuelRod = FindByResult(ERecipeType.Assemble, AntimatterFuelRod);
 
             Add(list, "能量矩阵（原油+石墨）", ERecipeType.Refine, new[] { CrudeOil, Graphite },
                 (plasma, 2), (xray, 4), (energyMatrix, 3));
@@ -91,9 +96,41 @@ namespace TowerFactory
                 (xray, 1));
             Add(list, "精炼油（原油+煤）", ERecipeType.Refine, new[] { CrudeOil, Coal },
                 (plasma, 1), (reforming, 1));
+            Add(list, "精炼油（氢+煤）", ERecipeType.Refine, new[] { Hydrogen, Coal },
+                (reforming, 1));
             AddGrapheneSwap(list, "卡西米尔晶体（可燃冰）", casimir, fireIceGraphene);
             AddGrapheneSwap(list, "卡西米尔晶体（光栅石+可燃冰）", casimirGrating, fireIceGraphene);
+            AddAntimatterFuelRodPhotonSwap(list, "反物质燃料棒（光子）", massEnergy, antimatterFuelRod);
             return list;
+        }
+
+        /// <summary>
+        /// 对撞机质能储存 + 组装台燃料棒；塔内用临界光子替代配方中的反物质与氢。
+        /// </summary>
+        private static void AddAntimatterFuelRodPhotonSwap(List<PseudoRecipe> list, string name, RecipeProto massEnergy, RecipeProto fuelRod)
+        {
+            if (massEnergy == null || fuelRod == null)
+            {
+                TowerFactory.Log.LogWarning($"伪配方 {name} 未启用：找不到对应的真实配方");
+                return;
+            }
+            int antiNeed = fuelRod.ItemCounts[Array.IndexOf(fuelRod.Items, Antimatter)];
+            int antiPerMass = massEnergy.ResultCounts[Array.IndexOf(massEnergy.Results, Antimatter)];
+            if (antiNeed <= 0 || antiPerMass <= 0 || antiNeed % antiPerMass != 0)
+            {
+                TowerFactory.Log.LogWarning($"伪配方 {name} 未启用：反物质数量无法对齐质能储存配方");
+                return;
+            }
+            int massTimes = antiNeed / antiPerMass;
+            var order = new List<int> { CriticalPhoton };
+            foreach (int id in fuelRod.Items)
+            {
+                if (id != Antimatter && id != Hydrogen)
+                {
+                    order.Add(id);
+                }
+            }
+            Add(list, name, ERecipeType.Particle, order.ToArray(), (massEnergy, massTimes), (fuelRod, 1));
         }
 
         private static void AddGrapheneSwap(List<PseudoRecipe> list, string name, RecipeProto target, RecipeProto grapheneRecipe)
@@ -169,6 +206,56 @@ namespace TowerFactory
             }
         }
 
+        /// <summary>重整精炼：2 精炼油 + 1 氢 + 1 煤 → 3 精炼油（塔内伪配方只放氢+煤，统计仍记 2 油消耗、3 油产出）。</summary>
+        private static RecipeProto FindReformedRefinement()
+        {
+            foreach (RecipeProto recipe in LDB.recipes.dataArray)
+            {
+                if (recipe == null || recipe.Type != ERecipeType.Refine)
+                {
+                    continue;
+                }
+                if (RecipeResultCount(recipe, RefinedOil) != 3)
+                {
+                    continue;
+                }
+                if (RecipeItemCount(recipe, RefinedOil) != 2
+                    || RecipeItemCount(recipe, Hydrogen) != 1
+                    || RecipeItemCount(recipe, Coal) != 1)
+                {
+                    continue;
+                }
+                return recipe;
+            }
+            return null;
+        }
+
+        private static int RecipeItemCount(RecipeProto recipe, int itemId)
+        {
+            int total = 0;
+            for (int i = 0; i < recipe.Items.Length; i++)
+            {
+                if (recipe.Items[i] == itemId)
+                {
+                    total += recipe.ItemCounts[i];
+                }
+            }
+            return total;
+        }
+
+        private static int RecipeResultCount(RecipeProto recipe, int itemId)
+        {
+            int total = 0;
+            for (int i = 0; i < recipe.Results.Length; i++)
+            {
+                if (recipe.Results[i] == itemId)
+                {
+                    total += recipe.ResultCounts[i];
+                }
+            }
+            return total;
+        }
+
         private static RecipeProto Find(ERecipeType type, int[] items, int result)
         {
             foreach (RecipeProto recipe in LDB.recipes.dataArray)
@@ -176,6 +263,18 @@ namespace TowerFactory
                 if (recipe != null && recipe.Type == type
                     && Array.IndexOf(recipe.Results, result) >= 0
                     && recipe.Items.Length == items.Length && items.All(id => Array.IndexOf(recipe.Items, id) >= 0))
+                {
+                    return recipe;
+                }
+            }
+            return null;
+        }
+
+        private static RecipeProto FindByResult(ERecipeType type, int result)
+        {
+            foreach (RecipeProto recipe in LDB.recipes.dataArray)
+            {
+                if (recipe != null && recipe.Type == type && Array.IndexOf(recipe.Results, result) >= 0)
                 {
                     return recipe;
                 }

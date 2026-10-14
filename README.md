@@ -29,7 +29,9 @@
   * Oil Refinery: 4 Crude Oil + 2 Energetic Graphite → 3 Energy Matrix
   * Oil Refinery: 1 Refined Oil → 1 Hydrogen + 1 Energetic Graphite (put either one in slot 2)
   * Oil Refinery: 2 Crude Oil + 1 Coal → 3 Refined Oil
+  * Oil Refinery: 1 Hydrogen + 1 Coal → 1 Refined Oil (reforming net; statistics: 2 oil consumed, 3 oil produced per craft)
   * Assembler: Titanium Crystal / Optical Grating Crystal + Fire Ice + Hydrogen → Casimir Crystal
+  * Miniature Particle Collider: 12 Critical Photons + Annihilation Constraint Sphere + Titanium Alloy → 2 Antimatter Fuel Rods (Mass-Energy Storage ×6 + assembler fuel-rod recipe)
 
 ## Mining
 
@@ -118,7 +120,9 @@
   * 原油精炼厂：4 原油 + 2 高能石墨 → 3 能量矩阵
   * 原油精炼厂：1 精炼油 → 1 氢 + 1 高能石墨（第二格放哪个就收哪个）
   * 原油精炼厂：2 原油 + 1 煤矿 → 3 精炼油
+  * 原油精炼厂：1 氢 + 1 煤矿 → 1 精炼油（重整净效果；统计仍记每周期消耗 2 油、产出 3 油）
   * 制造台：钛晶石 / 光栅石 + 可燃冰 + 氢 → 卡西米尔晶体
+  * 微型粒子对撞机：12 临界光子 + 湮灭约束球 + 钛合金 → 2 反物质燃料棒（质能储存 ×6 + 组装台燃料棒配方）
 
 ## 采集
 

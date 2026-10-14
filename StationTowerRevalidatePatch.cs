@@ -7,6 +7,7 @@ namespace TowerFactory
     public static class StationTowerRevalidatePatch
     {
         [HarmonyPostfix]
+        [YummiHarness.Guard("fc4688b51c514392")]
         public static void Begin_Postfix()
         {
             StationProductionPatch.InvalidateAllStationPlans();
