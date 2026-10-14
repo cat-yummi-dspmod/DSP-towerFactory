@@ -2,6 +2,16 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.0] - 2026-10-15
+
+### Changed
+
+- **YummiHarness**: all Harmony patches go through `Harness.PatchAll` with per-method `[Guard]` fingerprints; requires `cat_yummi-YummiHarness`.
+
+### 变更
+
+- **YummiHarness**：全部补丁改为 `Harness.PatchAll` + `[Guard]` 安全注入；需安装 `cat_yummi-YummiHarness` 前置。
+
 ## [1.2.4] - 2026-10-14
 
 ### Fixed
@@ -172,6 +182,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - 运输塔窗口 **填原料** 按钮。
 - 需要 **BepInEx 5.4.17**（xiaoye97）。
 
+[1.3.0]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.2.4...v1.3.0
 [1.2.4]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.2.1...v1.2.2
