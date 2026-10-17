@@ -79,10 +79,7 @@ namespace TowerFactory
             {
                 return;
             }
-            if (_autoFillButton.transform.parent != window.windowTrans)
-            {
-                _autoFillButton.transform.SetParent(window.windowTrans, false);
-            }
+            PlaceInTabRow(window, (RectTransform)_autoFillButton.transform);
             _autoFillButton.transform.SetAsLastSibling();
             _buttonHost = _autoFillButton.GetComponent<AutoFillButtonHost>();
             if (_buttonHost == null)
@@ -90,6 +87,41 @@ namespace TowerFactory
                 _buttonHost = _autoFillButton.gameObject.AddComponent<AutoFillButtonHost>();
             }
             _buttonHost.window = window;
+        }
+
+        /// <summary>
+        /// 放在分割线右下：与「物流站设置 / 总控面板」标签同一行、靠窗口右边。
+        /// 标签行随窗口高度移动，所以挂到标签所在的父节点，并沿用它的纵向锚点。
+        /// </summary>
+        private static void PlaceInTabRow(UIStationWindow window, RectTransform btnRect)
+        {
+            RectTransform tab = window.controlPanelBtnRt;
+            RectTransform parent = tab != null ? tab.parent as RectTransform : null;
+            if (parent == null)
+            {
+                parent = window.windowTrans;
+                if (btnRect.parent != parent)
+                {
+                    btnRect.SetParent(parent, false);
+                }
+                btnRect.anchorMin = new Vector2(1f, 1f);
+                btnRect.anchorMax = new Vector2(1f, 1f);
+                btnRect.pivot = new Vector2(1f, 1f);
+                btnRect.anchoredPosition = new Vector2(-20f, -36f);
+                return;
+            }
+            if (btnRect.parent != parent)
+            {
+                btnRect.SetParent(parent, false);
+            }
+            btnRect.anchorMin = new Vector2(1f, tab.anchorMin.y);
+            btnRect.anchorMax = new Vector2(1f, tab.anchorMax.y);
+            btnRect.pivot = new Vector2(1f, tab.pivot.y);
+            float tabHeight = tab.rect.height > 1f ? tab.rect.height : 22f;
+            float height = btnRect.sizeDelta.y;
+            float centerShift = (tabHeight - height) * (0.5f - tab.pivot.y);
+            Vector3 rightLocal = parent.InverseTransformPoint(window.windowTrans.TransformPoint(new Vector3(window.windowTrans.rect.xMax, 0f, 0f)));
+            btnRect.anchoredPosition = new Vector2(rightLocal.x - 20f - parent.rect.xMax, tab.anchoredPosition.y + centerShift);
         }
 
         private static void CreateButton(UIStationWindow window)

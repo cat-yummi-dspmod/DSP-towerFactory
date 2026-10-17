@@ -22,7 +22,7 @@
   * Only the product in slot 2 is stored. Byproducts are discarded, but still counted as produced in the statistics panel.
   * Byproducts never block the main product.
 * Auto-fill ingredients:
-  * Put the product in slot 2 and leave slot 3 onward empty, then click **Fill Ingredients** (top right). Slot 1 is set to **Storage** if needed; if slot 1 is empty, the mod picks a production building that can make slot 2’s product (preferring a building already in the station).
+  * Put the product in slot 2 and leave slot 3 onward empty, then click **Fill Ingredients** (right end of the settings tab row, below the divider). Slot 1 is set to **Storage** if needed; if slot 1 is empty, the mod picks a production building that can make slot 2’s product (preferring a building already in the station).
   * Ingredients are set to Demand. Pseudo recipes take priority.
   * If no recipe fits, you'll see "原料格子不够，请加装运输塔扩容mod" (not enough slots, install a station expansion mod).
 * Pseudo recipes (several real recipes merged into one; every intermediate step is counted in the statistics):
@@ -79,6 +79,7 @@
 * Multiplayer is untested.
 * The button and its popup tips follow the game language (Chinese for zh-CN, English otherwise). Log messages are Chinese only.
 * Stations are re-checked as tower factories when a save finishes loading.
+* Requires Station Assistant (BigTower no longer needed). Config `[Slots] SlotPreset`: `BigTower` (default) applies the same slot preset as BigTower (interstellar 9 / planetary 8); `Off` changes nothing. If BigTower / SafeBigTower is installed, that mod wins.
 
 ## CREDITS
 
@@ -113,7 +114,7 @@
   * 只收第二格的产品，副产物直接丢弃，但会计入生产统计。
   * 副产物不会影响主产物的生产。
 * 自动填原料：
-  * 第二格放产品、第三格起留空，点右上角「塔厂：填原料」。第一格若不是仓储会自动改为仓储；第一格为空时会根据第二格产品识别生产建筑（优先用塔里已有建筑）。
+  * 第二格放产品、第三格起留空，点分割线右下（设置标签行最右侧）的「塔厂：填原料」。第一格若不是仓储会自动改为仓储；第一格为空时会根据第二格产品识别生产建筑（优先用塔里已有建筑）。
   * 原料格设为需求，伪配方优先。
   * 如果格子放不下任何配方，会提示"原料格子不够，请加装运输塔扩容mod"。
 * 伪配方（多步真实配方合成一步，中间步骤的生产和消耗都计入统计）：
@@ -169,6 +170,7 @@
 
 * 未在多人游戏中测试。
 * 进档完成后会重新识别所有运输塔是否为塔厂。
+* 前置：Station Assistant（不再需要 BigTower）。配置 `[Slots] SlotPreset`：`BigTower`（默认）自动套用与 BigTower 相同的槽位设置（星际 9 / 行星 8 格）；`Off` 不改任何设置。装了 BigTower / SafeBigTower 时以它们为准。
 
 ## 鸣谢
 

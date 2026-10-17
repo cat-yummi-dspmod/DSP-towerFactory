@@ -2,6 +2,20 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.0] - 2026-10-17
+
+### Changed
+
+- **No longer depends on BigTower**; depends on **Station Assistant** instead.
+- New config `[Slots] SlotPreset`: `BigTower` (default) applies the same Station Assistant preset as BigTower (interstellar 9 / planetary 8, expand on build/open); `Off` changes nothing. Skipped automatically when BigTower or SafeBigTower is installed.
+- "Fill Ingredients" button moved to the right end of the settings tab row (below the divider), freeing the top-right corner.
+
+### 变更
+
+- **不再依赖 BigTower**，改为依赖 **Station Assistant**。
+- 新增配置 `[Slots] SlotPreset`：`BigTower`（默认）自动套用与 BigTower 相同的 Station Assistant 设置（星际 9 / 行星 8 格，建造/打开时扩容）；`Off` 不改任何设置。已安装 BigTower 或 SafeBigTower 时自动跳过。
+- 「塔厂：填原料」按钮移到分割线右下（设置标签行最右侧），不再占用右上角。
+
 ## [1.3.0] - 2026-10-15
 
 ### Changed
