@@ -137,7 +137,7 @@ namespace TowerFactory
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.GameTick))]
-        [YummiHarness.Guard("d51c267cb7ae3cf0")]
+        [CatAPI.Guard("d51c267cb7ae3cf0")]
         public static void PlanetTransport_GameTick_Postfix(PlanetTransport __instance)
         {
             PlanetFactory factory = __instance.factory;

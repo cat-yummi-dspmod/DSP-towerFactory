@@ -9,7 +9,7 @@ namespace TowerFactory
         public const int MaxSwarmSailCount = 10000;
 
         [HarmonyPrefix]
-        [YummiHarness.Guard("f4cdd480508157f8")]
+        [CatAPI.Guard("f4cdd480508157f8")]
         public static bool Prefix(DysonSwarm __instance, ref int __result)
         {
             if (__instance.sailCount >= MaxSwarmSailCount)

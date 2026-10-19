@@ -26,7 +26,7 @@ namespace TowerFactory
 
         [HarmonyPostfix]
         [HarmonyPatch(nameof(GameHistoryData.NotifyTechUnlock))]
-        [YummiHarness.Guard("69c5bc40ce9ed7f5")]
+        [CatAPI.Guard("69c5bc40ce9ed7f5")]
         public static void NotifyTechUnlock_Postfix(GameHistoryData __instance, int _techId, int _level, bool _unlockedDirect)
         {
             if (__instance == null)

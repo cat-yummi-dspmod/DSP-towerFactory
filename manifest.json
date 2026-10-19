@@ -1,11 +1,11 @@
 {
   "name": "TowerFactory",
   "description": "Logistics stations can produce items | 运输塔也能生产物资",
-  "version_number": "1.4.0",
+  "version_number": "1.4.1",
   "website_url": "https://github.com/cat-yummi-dspmod/DSP-towerFactory",
   "dependencies": [
     "xiaoye97-BepInEx-5.4.17",
-    "cat_yummi-YummiHarness-0.2.3",
-    "cat_yummi-StationAssistant-0.1.7"
+    "cat_yummi-CatAPI-0.2.4",
+    "cat_yummi-StationAssistant-0.1.9"
   ]
 }

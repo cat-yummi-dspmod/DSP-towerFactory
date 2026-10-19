@@ -12,7 +12,7 @@ namespace TowerFactory
     }
 
     [BepInPlugin(PLUGIN_GUID, PLUGIN_NAME, PLUGIN_VERSION)]
-    [BepInDependency(YummiHarness.HarnessPlugin.PluginGuid)]
+    [BepInDependency(CatAPI.HarnessPlugin.PluginGuid)]
     [BepInDependency(StationAssistant.Plugin.PluginGuid)]
     // 软依赖只为保证加载顺序：若已装 BigTower / SafeBigTower，以它们为准，塔厂不再重复设置。
     [BepInDependency(BigTowerGuid, BepInDependency.DependencyFlags.SoftDependency)]
@@ -26,7 +26,7 @@ namespace TowerFactory
         internal const string SafeBigTowerGuid = "com.yummi.dsp.safebigtower";
 
         private static readonly Harmony harmony = new Harmony(PLUGIN_GUID);
-        private static readonly YummiHarness.PatchOptions HarnessOptions = new YummiHarness.PatchOptions { ModName = "TowerFactory" };
+        private static readonly CatAPI.PatchOptions HarnessOptions = new CatAPI.PatchOptions { ModName = "TowerFactory" };
         internal static ManualLogSource Log;
 
         private void Awake()
@@ -38,12 +38,12 @@ namespace TowerFactory
                 "BigTower = 自动套用与 BigTower 相同的 Station Assistant 设置（星际 9 / 行星 8 格，建造/打开时扩容）。Off = 不改任何设置。");
             ApplySlotPreset(preset.Value);
 
-            YummiHarness.Harness.PatchAll(harmony, typeof(StationProductionPatch), HarnessOptions);
-            YummiHarness.Harness.PatchAll(harmony, typeof(UIStationWindowPatch), HarnessOptions);
-            YummiHarness.Harness.PatchAll(harmony, typeof(TechStationGiftPatch), HarnessOptions);
-            YummiHarness.Harness.PatchAll(harmony, typeof(DysonSwarmCapPatch), HarnessOptions);
-            YummiHarness.Harness.PatchAll(harmony, typeof(StationTowerRevalidatePatch), HarnessOptions);
-            YummiHarness.Harness.PatchAll(harmony, typeof(TechHashMainThreadPatch), HarnessOptions);
+            CatAPI.Harness.PatchAll(harmony, typeof(StationProductionPatch), HarnessOptions);
+            CatAPI.Harness.PatchAll(harmony, typeof(UIStationWindowPatch), HarnessOptions);
+            CatAPI.Harness.PatchAll(harmony, typeof(TechStationGiftPatch), HarnessOptions);
+            CatAPI.Harness.PatchAll(harmony, typeof(DysonSwarmCapPatch), HarnessOptions);
+            CatAPI.Harness.PatchAll(harmony, typeof(StationTowerRevalidatePatch), HarnessOptions);
+            CatAPI.Harness.PatchAll(harmony, typeof(TechHashMainThreadPatch), HarnessOptions);
 
             Log.LogInfo($"{PLUGIN_NAME} v{PLUGIN_VERSION} 已加载");
         }
@@ -54,7 +54,7 @@ namespace TowerFactory
             {
                 return;
             }
-            if (YummiHarness.Harness.IsPluginLoaded(BigTowerGuid) || YummiHarness.Harness.IsPluginLoaded(SafeBigTowerGuid))
+            if (CatAPI.Harness.IsPluginLoaded(BigTowerGuid) || CatAPI.Harness.IsPluginLoaded(SafeBigTowerGuid))
             {
                 Log.LogInfo("已安装 BigTower / SafeBigTower，槽位预设以它们为准，塔厂跳过 SlotPreset。");
                 return;

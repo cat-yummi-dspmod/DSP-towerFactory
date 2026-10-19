@@ -36,7 +36,7 @@ namespace TowerFactory
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameMain), "Update")]
-        [YummiHarness.Guard("381b98d1af328905")]
+        [CatAPI.Guard("381b98d1af328905")]
         public static void GameMain_Update_Postfix()
         {
             while (pendingCrafts.TryDequeue(out PendingTechCraft craft))

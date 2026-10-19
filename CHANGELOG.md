@@ -2,6 +2,12 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.1] - 2026-10-19
+
+### Changed
+
+- Thunderstore: **cat_yummi-CatAPI-0.2.4**, **cat_yummi-StationAssistant-0.1.9** (YummiHarness rename).
+
 ## [1.4.0] - 2026-10-17
 
 ### Changed
@@ -20,11 +26,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **YummiHarness**: all Harmony patches go through `Harness.PatchAll` with per-method `[Guard]` fingerprints; requires `cat_yummi-YummiHarness`.
+- **CatAPI**: all Harmony patches go through `Harness.PatchAll` with per-method `[Guard]` fingerprints; requires `cat_yummi-CatAPI`.
 
 ### 变更
 
-- **YummiHarness**：全部补丁改为 `Harness.PatchAll` + `[Guard]` 安全注入；需安装 `cat_yummi-YummiHarness` 前置。
+- **CatAPI**：全部补丁改为 `Harness.PatchAll` + `[Guard]` 安全注入；需安装 `cat_yummi-CatAPI` 前置。
 
 ## [1.2.4] - 2026-10-14
 
