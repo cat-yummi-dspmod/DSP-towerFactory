@@ -17,7 +17,7 @@
 		<PackageId>TowerFactory</PackageId>
 		<BepInExPluginGuid>com.yummi.dsp.towerfactory</BepInExPluginGuid>
 		<Description>Logistics stations can produce items | 运输塔也能生产物资</Description>
-		<Version>1.4.1</Version>
+		<Version>1.4.2</Version>
 		<Authors>cat-yummi</Authors>
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>

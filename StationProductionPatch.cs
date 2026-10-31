@@ -18,7 +18,8 @@ namespace TowerFactory
     /// - 分馏塔：第二格放重氢，第三格放氢，每座每半秒把 0.1 个氢转换为重氢。
     /// - 抽水机：第二格放本行星的海洋物品；原油萃取站：第二格放原油，本行星需有油井。
     /// 配置稳定数秒后开始生产：第一格有几座建筑，就以几倍速度生产。
-    /// 生产周期为基础周期的 1/10，每周期生产 ceil(建筑数 / 10) 次。
+    /// 每周期生产 batch = ceil(建筑数 / 10) 次，周期 = 基础周期 × batch / 建筑数，总速度严格等于建筑数倍；
+    /// 周期最短为基础周期的 1/10（建筑数为 10 的整数倍时）。
     /// </summary>
     [HarmonyPatch]
     public class StationProductionPatch
@@ -248,12 +249,22 @@ namespace TowerFactory
             }
             if (plan.kind == PlanKind.Gamma)
             {
-                DrawGammaEnergy(factory, state, plan, batch);
+                DrawGammaEnergy(factory, state, plan, batch, buildingCount);
             }
-            state.progress += CycleDivisor;
-            while (state.progress >= period)
+            double cycle;
+            if (plan.kind == PlanKind.TechResearch || (plan.kind == PlanKind.Dyson && plan.dysonCellPoints))
             {
-                state.progress -= period;
+                state.progress += CycleDivisor;
+                cycle = period;
+            }
+            else
+            {
+                state.progress += buildingCount;
+                cycle = period * batch;
+            }
+            while (state.progress >= cycle)
+            {
+                state.progress -= cycle;
                 switch (plan.kind)
                 {
                     case PlanKind.Recipe:
@@ -874,7 +885,7 @@ namespace TowerFactory
         /// <summary>
         /// 每帧按生产速度从戴森球多余能量中取电存入缓冲，最多攒够一个周期所需。
         /// </summary>
-        private static void DrawGammaEnergy(PlanetFactory factory, State state, Plan plan, int batch)
+        private static void DrawGammaEnergy(PlanetFactory factory, State state, Plan plan, int batch, int buildingCount)
         {
             DysonSphere sphere = factory.dysonSphere;
             long energyPerPhoton = EnergyPerPhoton(plan);
@@ -883,7 +894,7 @@ namespace TowerFactory
                 return;
             }
             long bufferCap = batch * energyPerPhoton;
-            long want = Math.Min((long)(bufferCap * CycleDivisor / plan.photonTicks) + 1, bufferCap - state.energyBuffer);
+            long want = Math.Min((long)(buildingCount * (double)energyPerPhoton / plan.photonTicks) + 1, bufferCap - state.energyBuffer);
             if (want <= 0)
             {
                 return;
