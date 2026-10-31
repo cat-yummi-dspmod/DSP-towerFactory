@@ -29,7 +29,7 @@ namespace TowerFactory
         private const int FirstIngredientSlot = 2;
         /// <summary>矩阵研究塔：第二格起可放研究矩阵（含供应设置的第二格）。</summary>
         private const int TechResearchMatrixFirstSlot = 1;
-        private const string SlotsNotEnoughMessage = "原料格子不够，请加装运输塔扩容mod";
+        private const string SlotsNotEnoughMessage = "原料格子不够，请安装 BigTower";
         private const double OilExtractorTicksPerItem = 60.0;
         /// <summary>普通采矿机：6 矿脉 × 30/分钟/脉。</summary>
         private const double VeinMinerItemsPerMinutePerBuilding = 180.0;
@@ -1459,7 +1459,7 @@ namespace TowerFactory
 
             if (!candidates.Any(ingredients => FitsSlotCount(storage, ingredients)))
             {
-                reason = Tr(SlotsNotEnoughMessage, "Not enough slots for the ingredients. Please install a station slot expansion mod");
+                reason = Tr(SlotsNotEnoughMessage, "Not enough slots for the ingredients. Please install BigTower");
                 return null;
             }
             foreach (int[] ingredients in candidates)

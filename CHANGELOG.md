@@ -6,11 +6,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Production speed is now exactly **N×** for N buildings: each cycle still crafts `ceil(N/10)` times, but the cycle is `base × ceil(N/10) / N` (shortest 1/10 of base). Previously 1–10 buildings all ran at 10×, 11–20 at 20×, etc. Ejector cell points and matrix research keep their fixed timing.
+- Production speed is now exactly **N×** for N buildings: each cycle still crafts `ceil(N/10)` times, but the cycle is `base × ceil(N/10) / N` (shortest 1/10 of base). Previously 1–10 buildings all ran at 10×, 11–20 at 20×, etc.
+- **No longer depends on Station Assistant**; config `[Slots] SlotPreset` removed. When ingredients don't fit, the hint now says to install BigTower.
 
 ### 变更
 
-- 生产速度严格等于**建筑数倍**：每周期仍生产 `ceil(N/10)` 次，周期改为 `基础周期 × ceil(N/10) / N`（最短为基础周期的 1/10）。此前 1–10 座都是 10 倍速、11–20 座都是 20 倍速。弹射器细胞点和矩阵研究保持原节奏。
+- 生产速度严格等于**建筑数倍**：每周期仍生产 `ceil(N/10)` 次，周期改为 `基础周期 × ceil(N/10) / N`（最短为基础周期的 1/10）。此前 1–10 座都是 10 倍速、11–20 座都是 20 倍速。
+- **不再依赖 Station Assistant**，移除配置 `[Slots] SlotPreset`。原料格子不够时提示"请安装 BigTower"。
 
 ## [1.4.1] - 2026-10-19
 

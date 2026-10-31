@@ -24,7 +24,7 @@
 * Auto-fill ingredients:
   * Put the product in slot 2 and leave slot 3 onward empty, then click **Fill Ingredients** (right end of the settings tab row, below the divider). Slot 1 is set to **Storage** if needed; if slot 1 is empty, the mod picks a production building that can make slot 2’s product (preferring a building already in the station).
   * Ingredients are set to Demand. Pseudo recipes take priority.
-  * If no recipe fits, you'll see "原料格子不够，请加装运输塔扩容mod" (not enough slots, install a station expansion mod).
+  * If no recipe fits, you'll see "Not enough slots for the ingredients. Please install BigTower".
 * Pseudo recipes (several real recipes merged into one; every intermediate step is counted in the statistics):
   * Oil Refinery: 4 Crude Oil + 2 Energetic Graphite → 3 Energy Matrix
   * Oil Refinery: 1 Refined Oil → 1 Hydrogen + 1 Energetic Graphite (put either one in slot 2)
@@ -79,7 +79,7 @@
 * Multiplayer is untested.
 * The button and its popup tips follow the game language (Chinese for zh-CN, English otherwise). Log messages are Chinese only.
 * Stations are re-checked as tower factories when a save finishes loading.
-* Requires Station Assistant (BigTower no longer needed). Config `[Slots] SlotPreset`: `BigTower` (default) applies the same slot preset as BigTower (interstellar 9 / planetary 8); `Off` changes nothing. If BigTower / SafeBigTower is installed, that mod wins.
+* Recipes with many ingredients need more station slots; install BigTower for that.
 
 ## CREDITS
 
@@ -116,7 +116,7 @@
 * 自动填原料：
   * 第二格放产品、第三格起留空，点分割线右下（设置标签行最右侧）的「塔厂：填原料」。第一格若不是仓储会自动改为仓储；第一格为空时会根据第二格产品识别生产建筑（优先用塔里已有建筑）。
   * 原料格设为需求，伪配方优先。
-  * 如果格子放不下任何配方，会提示"原料格子不够，请加装运输塔扩容mod"。
+  * 如果格子放不下任何配方，会提示"原料格子不够，请安装 BigTower"。
 * 伪配方（多步真实配方合成一步，中间步骤的生产和消耗都计入统计）：
   * 原油精炼厂：4 原油 + 2 高能石墨 → 3 能量矩阵
   * 原油精炼厂：1 精炼油 → 1 氢 + 1 高能石墨（第二格放哪个就收哪个）
@@ -170,7 +170,7 @@
 
 * 未在多人游戏中测试。
 * 进档完成后会重新识别所有运输塔是否为塔厂。
-* 前置：Station Assistant（不再需要 BigTower）。配置 `[Slots] SlotPreset`：`BigTower`（默认）自动套用与 BigTower 相同的槽位设置（星际 9 / 行星 8 格）；`Off` 不改任何设置。装了 BigTower / SafeBigTower 时以它们为准。
+* 原料多的配方需要更多运输塔格子，请安装 BigTower。
 
 ## 鸣谢
 
