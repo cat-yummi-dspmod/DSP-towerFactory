@@ -18,11 +18,12 @@
 
 * Works with every building that has recipes: assemblers, smelters, chemical plants, oil refineries, particle colliders and matrix labs.
 * Slot 2 is the product; slots 3 and later are the ingredients, in recipe order.
+* **Self-assembler special layout**: leave slot 1 empty, put the `Assemble`-type assembler being produced in slot 2, and put its ingredients from slot 3 onward. Output stays in slot 2. Speed uses the slot-2 count, with a minimum of 100.
 * Byproducts:
   * Only the product in slot 2 is stored. Byproducts are discarded, but still counted as produced in the statistics panel.
   * Byproducts never block the main product.
 * Auto-fill ingredients:
-  * Put the product in slot 2 and leave slot 3 onward empty, then click **Fill Ingredients** (right end of the settings tab row, below the divider). Slot 1 is set to **Storage** if needed; if slot 1 is empty, the mod picks a production building that can make slot 2’s product (preferring a building already in the station).
+  * Put the product in slot 2 and leave slot 3 onward empty, then click **Fill Ingredients** (right end of the settings tab row, below the divider). Slot 1 is set to **Storage** if needed; if slot 1 is empty, the mod picks a production building that can make slot 2’s product—except for the self-assembler layout above, where slot 1 stays empty.
   * Ingredients are set to Demand. Pseudo recipes take priority.
   * If no recipe fits, you'll see "Not enough slots for the ingredients. Please install BigTower".
 * Pseudo recipes (several real recipes merged into one; every intermediate step is counted in the statistics):
@@ -110,11 +111,12 @@
 
 * 支持所有有配方的生产建筑：制造台、熔炉、化工厂、原油精炼厂、微型粒子对撞机、矩阵研究站。
 * 第二格放产品，第三格起按配方顺序放原料。
+* **自产制造台特例**：第一格留空，第二格放要自产的 `Assemble` 类制造台，第三格起放其原料；产物累加到第二格。倍速取第二格数量，最低按 100 座计算。
 * 副产物：
   * 只收第二格的产品，副产物直接丢弃，但会计入生产统计。
   * 副产物不会影响主产物的生产。
 * 自动填原料：
-  * 第二格放产品、第三格起留空，点分割线右下（设置标签行最右侧）的「塔厂：填原料」。第一格若不是仓储会自动改为仓储；第一格为空时会根据第二格产品识别生产建筑（优先用塔里已有建筑）。
+  * 第二格放产品、第三格起留空，点分割线右下（设置标签行最右侧）的「塔厂：填原料」。第一格若不是仓储会自动改为仓储；第一格为空时会根据第二格产品识别生产建筑，但上述自产制造台布局会保持第一格为空。
   * 原料格设为需求，伪配方优先。
   * 如果格子放不下任何配方，会提示"原料格子不够，请安装 BigTower"。
 * 伪配方（多步真实配方合成一步，中间步骤的生产和消耗都计入统计）：

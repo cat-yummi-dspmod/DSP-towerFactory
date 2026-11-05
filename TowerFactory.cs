@@ -10,7 +10,7 @@ namespace TowerFactory
     {
         public const string PLUGIN_GUID = "com.yummi.dsp.towerfactory";
         public const string PLUGIN_NAME = "塔厂 (Tower Factory)";
-        public const string PLUGIN_VERSION = "1.4.2";
+        public const string PLUGIN_VERSION = "1.4.3";
 
         private static readonly Harmony harmony = new Harmony(PLUGIN_GUID);
         private static readonly CatAPI.PatchOptions HarnessOptions = new CatAPI.PatchOptions { ModName = "TowerFactory" };

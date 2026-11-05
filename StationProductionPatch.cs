@@ -96,8 +96,7 @@ namespace TowerFactory
             /// <summary>弹射器为细胞点（太阳帆）；发射井为结构点（火箭）。</summary>
             public bool dysonCellPoints;
 
-            /// <summary>自产制造台：第一格空、第二格为制造台与产物；不影响普通塔厂布局。</summary>
-            public bool selfAssemblerSlot2;
+            public int buildingSlotIndex;
             public int minBuildingCount;
         }
 
@@ -135,33 +134,15 @@ namespace TowerFactory
             return slot2 != null && slot2.isAssembler && slot2.assemblerRecipeType == ERecipeType.Assemble;
         }
 
-        internal static bool TryResolveRecipeProductId(StationStore[] storage, PrefabDesc prefabDesc, int buildingItemId, out int productId, out bool unusedImplicit)
-        {
-            unusedImplicit = false;
-            productId = storage[1].itemId;
-            return productId > 0;
-        }
-
         private static Plan MatchSelfAssemblerTowerPlan(StationStore[] storage, out string reason)
         {
-            reason = null;
-            if (storage[0].itemId != 0)
-            {
-                reason = Tr("自产制造台时第一格必须为空", "Slot 1 must be empty for self-assembler towers");
-                return null;
-            }
             int productId = storage[1].itemId;
-            PrefabDesc prefabDesc = LDB.items.Select(productId)?.prefabDesc;
-            if (prefabDesc == null || !prefabDesc.isAssembler || prefabDesc.assemblerRecipeType != ERecipeType.Assemble)
-            {
-                return null;
-            }
-            Plan plan = MatchRecipePlan(storage, prefabDesc.assemblerRecipeType, productId, out reason);
+            Plan plan = MatchRecipePlan(storage, ERecipeType.Assemble, productId, out reason);
             if (plan == null)
             {
                 return null;
             }
-            plan.selfAssemblerSlot2 = true;
+            plan.buildingSlotIndex = 1;
             plan.minBuildingCount = AssemblerSelfProductMinBuildings;
             plan.description += Tr("（自产制造台）", " (self-assembler tower)");
             return plan;
@@ -241,7 +222,7 @@ namespace TowerFactory
                 TowerFactory.Log.LogInfo($"{StationLabel(factory, station)} 塔厂开始生产：{plan.description}");
             }
 
-            int buildingCount = plan.selfAssemblerSlot2 ? storage[1].count : storage[0].count;
+            int buildingCount = storage[plan.buildingSlotIndex].count;
             if (buildingCount <= 0)
             {
                 if (plan.minBuildingCount <= 0)
@@ -853,14 +834,7 @@ namespace TowerFactory
                     times = Math.Min(times, storage[FirstIngredientSlot + j].count / itemCounts[j]);
                 }
                 ref StationStore productSlot = ref storage[1];
-                if (plan.selfAssemblerSlot2)
-                {
-                    if (productSlot.itemId != plan.resultId)
-                    {
-                        return;
-                    }
-                }
-                else if (productSlot.itemId != 0 && productSlot.itemId != plan.resultId)
+                if (productSlot.itemId != 0 && productSlot.itemId != plan.resultId)
                 {
                     return;
                 }
@@ -875,7 +849,7 @@ namespace TowerFactory
                     ref StationStore store = ref storage[FirstIngredientSlot + j];
                     SplitInc(ref store.count, ref store.inc, times * itemCounts[j]);
                 }
-                if (!plan.selfAssemblerSlot2 && productSlot.itemId == 0)
+                if (productSlot.itemId == 0)
                 {
                     productSlot.itemId = plan.resultId;
                 }
@@ -1052,8 +1026,8 @@ namespace TowerFactory
                 return MatchTechResearchPlan(storage, out reason);
             }
 
-            if (!TryResolveRecipeProductId(storage, prefabDesc, buildingSlot.itemId, out int productId, out _)
-                && storage[1].itemId <= 0)
+            int productId = storage[1].itemId;
+            if (productId <= 0)
             {
                 reason = Tr("第二格为空", "Slot 2 is empty");
                 return null;
@@ -1444,28 +1418,18 @@ namespace TowerFactory
                 return null;
             }
             StationStore buildingSlot = storage[0];
-            int buildingItemId;
-            int productId;
-            PrefabDesc prefabDesc;
-            if (IsSelfAssemblerInSlot2(storage))
-            {
-                buildingItemId = storage[1].itemId;
-                productId = buildingItemId;
-                prefabDesc = LDB.items.Select(buildingItemId)?.prefabDesc;
-            }
-            else
-            {
-                buildingItemId = buildingSlot.itemId;
-                prefabDesc = buildingItemId > 0 ? LDB.items.Select(buildingItemId)?.prefabDesc : null;
-                if (prefabDesc == null || !TryResolveRecipeProductId(storage, prefabDesc, buildingItemId, out productId, out _))
-                {
-                    reason = Tr("第二格需要放产品", "Slot 2 must hold the product");
-                    return null;
-                }
-            }
+            bool selfAssembler = IsSelfAssemblerInSlot2(storage);
+            int buildingItemId = selfAssembler ? storage[1].itemId : buildingSlot.itemId;
+            int productId = storage[1].itemId;
+            PrefabDesc prefabDesc = buildingItemId > 0 ? LDB.items.Select(buildingItemId)?.prefabDesc : null;
             if (prefabDesc == null || !(prefabDesc.isAssembler || prefabDesc.isLab || prefabDesc.isFractionator || prefabDesc.isPowerExchanger))
             {
                 reason = Tr("第一格需要是有配方的生产建筑", "Slot 1 must be a production building that uses recipes");
+                return null;
+            }
+            if (productId <= 0)
+            {
+                reason = Tr("第二格需要放产品", "Slot 2 must hold the product");
                 return null;
             }
             for (int i = FirstIngredientSlot; i < storage.Length; i++)

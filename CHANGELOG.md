@@ -2,6 +2,16 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.3] - 2026-11-05
+
+### Fixed
+
+- **Self-assembler towers**: leave slot 1 empty, put the assembler being produced in slot 2, and put ingredients from slot 3 onward. Output stays in slot 2; its count controls speed with the existing minimum of 100. This also supports advanced `Assemble`-type assemblers.
+
+### 修复
+
+- **自产制造台**：第一格留空，第二格放要自产的制造台，第三格起放原料；产物累加到第二格。倍速取第二格数量并保持最低 100 座，支持高级 `Assemble` 类制造台。
+
 ## [1.4.2] - 2026-10-31
 
 ### Changed
@@ -214,6 +224,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - 运输塔窗口 **填原料** 按钮。
 - 需要 **BepInEx 5.4.17**（xiaoye97）。
 
+[1.4.3]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.4.2...v1.4.3
+[1.4.2]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.4.1...v1.4.2
+[1.4.1]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.4.0...v1.4.1
+[1.4.0]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.2.4...v1.3.0
 [1.2.4]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/cat-yummi-dspmod/DSP-towerFactory/compare/v1.2.2...v1.2.3
