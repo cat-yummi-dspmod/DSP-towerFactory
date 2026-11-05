@@ -96,8 +96,8 @@ namespace TowerFactory
             /// <summary>弹射器为细胞点（太阳帆）；发射井为结构点（火箭）。</summary>
             public bool dysonCellPoints;
 
-            /// <summary>第二格为空时视同产品为第一格同款制造台，产物写入第一格。</summary>
-            public bool implicitSlot2Product;
+            /// <summary>自产制造台：第一格空、第二格为制造台与产物；不影响普通塔厂布局。</summary>
+            public bool selfAssemblerSlot2;
             public int minBuildingCount;
         }
 
@@ -125,15 +125,46 @@ namespace TowerFactory
             return Localization.isZHCN ? zh : en;
         }
 
-        /// <summary>制造台且第二格为空时，产品视为第一格同款制造台。</summary>
-        internal static bool TryResolveRecipeProductId(StationStore[] storage, PrefabDesc prefabDesc, int buildingItemId, out int productId, out bool implicitSlot2Product)
+        private static bool IsSelfAssemblerInSlot2(StationStore[] storage)
         {
-            implicitSlot2Product = prefabDesc.isAssembler
-                && prefabDesc.assemblerRecipeType == ERecipeType.Assemble
-                && storage[1].itemId <= 0
-                && buildingItemId > 0;
-            productId = implicitSlot2Product ? buildingItemId : storage[1].itemId;
+            if (storage == null || storage.Length < 2 || storage[0].itemId > 0 || storage[1].itemId <= 0)
+            {
+                return false;
+            }
+            PrefabDesc slot2 = LDB.items.Select(storage[1].itemId)?.prefabDesc;
+            return slot2 != null && slot2.isAssembler && slot2.assemblerRecipeType == ERecipeType.Assemble;
+        }
+
+        internal static bool TryResolveRecipeProductId(StationStore[] storage, PrefabDesc prefabDesc, int buildingItemId, out int productId, out bool unusedImplicit)
+        {
+            unusedImplicit = false;
+            productId = storage[1].itemId;
             return productId > 0;
+        }
+
+        private static Plan MatchSelfAssemblerTowerPlan(StationStore[] storage, out string reason)
+        {
+            reason = null;
+            if (storage[0].itemId != 0)
+            {
+                reason = Tr("自产制造台时第一格必须为空", "Slot 1 must be empty for self-assembler towers");
+                return null;
+            }
+            int productId = storage[1].itemId;
+            PrefabDesc prefabDesc = LDB.items.Select(productId)?.prefabDesc;
+            if (prefabDesc == null || !prefabDesc.isAssembler || prefabDesc.assemblerRecipeType != ERecipeType.Assemble)
+            {
+                return null;
+            }
+            Plan plan = MatchRecipePlan(storage, prefabDesc.assemblerRecipeType, productId, out reason);
+            if (plan == null)
+            {
+                return null;
+            }
+            plan.selfAssemblerSlot2 = true;
+            plan.minBuildingCount = AssemblerSelfProductMinBuildings;
+            plan.description += Tr("（自产制造台）", " (self-assembler tower)");
+            return plan;
         }
 
         [HarmonyPostfix]
@@ -210,7 +241,7 @@ namespace TowerFactory
                 TowerFactory.Log.LogInfo($"{StationLabel(factory, station)} 塔厂开始生产：{plan.description}");
             }
 
-            int buildingCount = storage[0].count;
+            int buildingCount = plan.selfAssemblerSlot2 ? storage[1].count : storage[0].count;
             if (buildingCount <= 0)
             {
                 if (plan.minBuildingCount <= 0)
@@ -821,8 +852,8 @@ namespace TowerFactory
                 {
                     times = Math.Min(times, storage[FirstIngredientSlot + j].count / itemCounts[j]);
                 }
-                ref StationStore productSlot = ref plan.implicitSlot2Product ? ref storage[0] : ref storage[1];
-                if (plan.implicitSlot2Product)
+                ref StationStore productSlot = ref storage[1];
+                if (plan.selfAssemblerSlot2)
                 {
                     if (productSlot.itemId != plan.resultId)
                     {
@@ -844,7 +875,7 @@ namespace TowerFactory
                     ref StationStore store = ref storage[FirstIngredientSlot + j];
                     SplitInc(ref store.count, ref store.inc, times * itemCounts[j]);
                 }
-                if (!plan.implicitSlot2Product && productSlot.itemId == 0)
+                if (!plan.selfAssemblerSlot2 && productSlot.itemId == 0)
                 {
                     productSlot.itemId = plan.resultId;
                 }
@@ -948,7 +979,15 @@ namespace TowerFactory
 
         private static bool StorageMightBeTowerFactory(StationComponent station, StationStore[] storage)
         {
-            if (storage == null || storage.Length < 2 || storage[0].itemId <= 0 || storage[0].count <= 0)
+            if (storage == null || storage.Length < 2)
+            {
+                return false;
+            }
+            if (IsSelfAssemblerInSlot2(storage))
+            {
+                return true;
+            }
+            if (storage[0].itemId <= 0 || storage[0].count <= 0)
             {
                 return false;
             }
@@ -976,6 +1015,11 @@ namespace TowerFactory
             if (storage.Length < 2)
             {
                 return null;
+            }
+
+            if (IsSelfAssemblerInSlot2(storage))
+            {
+                return MatchSelfAssemblerTowerPlan(storage, out reason);
             }
 
             StationStore buildingSlot = storage[0];
@@ -1008,7 +1052,7 @@ namespace TowerFactory
                 return MatchTechResearchPlan(storage, out reason);
             }
 
-            if (!TryResolveRecipeProductId(storage, prefabDesc, buildingSlot.itemId, out int productId, out bool implicitSlot2Product)
+            if (!TryResolveRecipeProductId(storage, prefabDesc, buildingSlot.itemId, out int productId, out _)
                 && storage[1].itemId <= 0)
             {
                 reason = Tr("第二格为空", "Slot 2 is empty");
@@ -1017,14 +1061,7 @@ namespace TowerFactory
 
             if (prefabDesc.isAssembler)
             {
-                Plan plan = MatchRecipePlan(storage, prefabDesc.assemblerRecipeType, productId, out reason);
-                if (plan != null && implicitSlot2Product)
-                {
-                    plan.implicitSlot2Product = true;
-                    plan.minBuildingCount = AssemblerSelfProductMinBuildings;
-                    plan.description += Tr("（第二格视为制造台）", " (slot 2 treated as assembler)");
-                }
-                return plan;
+                return MatchRecipePlan(storage, prefabDesc.assemblerRecipeType, productId, out reason);
             }
             if (prefabDesc.isLab)
             {
@@ -1298,6 +1335,10 @@ namespace TowerFactory
             }
             if (buildingSlot.itemId <= 0)
             {
+                if (IsSelfAssemblerInSlot2(storage))
+                {
+                    return true;
+                }
                 int productId = storage[1].itemId;
                 if (productId <= 0)
                 {
@@ -1403,15 +1444,28 @@ namespace TowerFactory
                 return null;
             }
             StationStore buildingSlot = storage[0];
-            PrefabDesc prefabDesc = buildingSlot.itemId > 0 ? LDB.items.Select(buildingSlot.itemId)?.prefabDesc : null;
+            int buildingItemId;
+            int productId;
+            PrefabDesc prefabDesc;
+            if (IsSelfAssemblerInSlot2(storage))
+            {
+                buildingItemId = storage[1].itemId;
+                productId = buildingItemId;
+                prefabDesc = LDB.items.Select(buildingItemId)?.prefabDesc;
+            }
+            else
+            {
+                buildingItemId = buildingSlot.itemId;
+                prefabDesc = buildingItemId > 0 ? LDB.items.Select(buildingItemId)?.prefabDesc : null;
+                if (prefabDesc == null || !TryResolveRecipeProductId(storage, prefabDesc, buildingItemId, out productId, out _))
+                {
+                    reason = Tr("第二格需要放产品", "Slot 2 must hold the product");
+                    return null;
+                }
+            }
             if (prefabDesc == null || !(prefabDesc.isAssembler || prefabDesc.isLab || prefabDesc.isFractionator || prefabDesc.isPowerExchanger))
             {
                 reason = Tr("第一格需要是有配方的生产建筑", "Slot 1 must be a production building that uses recipes");
-                return null;
-            }
-            if (!TryResolveRecipeProductId(storage, prefabDesc, buildingSlot.itemId, out int productId, out _))
-            {
-                reason = Tr("第二格需要放产品", "Slot 2 must hold the product");
                 return null;
             }
             for (int i = FirstIngredientSlot; i < storage.Length; i++)
@@ -1466,7 +1520,7 @@ namespace TowerFactory
             {
                 bool fits = FitsSlotCount(storage, ingredients)
                     && ingredients.Distinct().Count() == ingredients.Length
-                    && !ingredients.Contains(buildingSlot.itemId)
+                    && !ingredients.Contains(buildingItemId)
                     && !ingredients.Contains(productId);
                 if (fits)
                 {
